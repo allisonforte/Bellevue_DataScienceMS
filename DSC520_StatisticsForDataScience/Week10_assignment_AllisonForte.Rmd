@@ -1,0 +1,104 @@
+---
+title: "Week 10 assignment"
+author: "Allison Forte"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = '/Users/allison.forte/Downloads/DSC520-master')
+```
+
+# Assignment 10.2
+
+## Part 1
+Fit a Logistic Regression Model to Thoracic Surgery Binary Dataset
+
+```{r, include = TRUE}
+# load package
+library(foreign)
+
+# load data
+surgery_df = read.arff('data/ThoraricSurgery.arff')
+
+# split data into 2 sets to have a training and validating data set
+library(caTools)
+split <- sample.split(surgery_df, SplitRatio = 0.8)
+surgery_train <- subset(surgery_df, split == "TRUE")
+surgery_validate <- subset(surgery_df, split == "FALSE")
+```
+Assignment Instructions:
+
++ Fit a binary logistic regression model to the data set that predicts whether or not the patient survived for one year (the Risk1Y variable) after the surgery. Use the glm() function to perform the logistic regression. See Generalized Linear Models for an example. Include a summary using the summary() function in your results.
+
+```{r, include=TRUE}
+library(glm2)
+surgery_model <- glm(Risk1Yr ~ DGN + PRE4 + PRE5 + PRE6 +
+            PRE7 + PRE8 + PRE9 + PRE10 + PRE11 +
+            PRE14 + PRE17 + PRE19 + PRE25 + PRE30 +
+            PRE32 + AGE, data = surgery_train, family = binomial()  )
+summary(surgery_model)
+```
+
++ According to the summary, which variables had the greatest effect on the survival rate?
+    + According to the summary the variable with the greatest effect was PRE14 when the value was OC14
+    
++  To compute the accuracy of your model, use the dataset to predict the outcome variable. The percent of correct predictions is the accuracy of your model. What is the accuracy of your model?
+     + The accuracy of the model is 84%
+
+```{r, include=TRUE}
+# Compute the accuracy of your model
+
+# Use validation data in model based on training data
+val_res <- predict(surgery_model, surgery_validate, type = "response")
+
+# Compare results from validation data to results from training data (that the model was based on)
+train_res <-predict(surgery_model, surgery_train, type = "response")
+
+#Validate model using confusion matrix
+confmatrix <- table(Actual_Value = surgery_train$Risk1Yr, Predicted_Value = train_res >0.5)
+confmatrix
+
+#Accuracy
+(confmatrix[[1,1]] + confmatrix[[2,2]])/sum(confmatrix)
+```    
+
+## Part 2
+
++ Fit a logistic regression model to the binary-classifier-data.csv dataset
+    + The dataset (found in binary-classifier-data.csv) contains three variables; label, x, and y. The label variable is either 0 or 1 and is the output we want to predict using the x and y variables.
+    
+```{r, include = TRUE}
+# load data
+binary_df = read.csv('data/binary-classifier-data.csv')
+
+# split data into 2 sets to have a training and validating data set
+split <- sample.split(binary_df, SplitRatio = 0.8)
+binary_train <- subset(binary_df, split == "TRUE")
+binary_validate <- subset(binary_df, split == "FALSE")
+
+#  fit a logistic regression model
+binary_model <- glm(label ~ x + y, data = binary_train, family = binomial()  )
+summary(binary_model)
+```   
+   
++ What is the accuracy of the logistic regression classifier?
+    + The accuracy of this model is 58% with 80/20 split for training/validating data
+```{r, include=TRUE}
+# Compute the accuracy of your model
+
+# Use validation data in model based on training data
+val_res2 <- predict(binary_model, binary_validate, type = "response")
+
+# Compare results from validation data to results from training data (that the model was based on)
+train_res2 <-predict(binary_model, binary_train, type = "response")
+
+#Validate model using confusion matrix
+confmatrix <- table(Actual_Value = binary_train$label, Predicted_Value = train_res2 >0.5)
+confmatrix
+
+#Accuracy
+(confmatrix[[1,1]] + confmatrix[[2,2]])/sum(confmatrix)
+```  
